@@ -1,19 +1,62 @@
-import Link from "next/link"
-// import { DataTable } from "@/components/datatable"
-import { siteConfig } from "@/config/site"
-import { buttonVariants } from "@/components/ui/button"
+import { promises as fs } from "fs"
+import path from "path"
+import { Metadata } from "next"
+import Image from "next/image"
+import { z } from "zod"
 
-export default function IndexPage() {
+import { columns } from "@/components/columns"
+import { DataTable } from "@/components/data-table"
+
+import { taskSchema } from "/data/schema"
+
+export const metadata: Metadata = {
+  title: "Tasks",
+  description: "A task and issue tracker build using Tanstack Table.",
+}
+
+// Simulate a database read for tasks.
+async function getTasks() {
+  const data = await fs.readFile(path.join(process.cwd(), "/data/tasks.json"))
+
+  const tasks = JSON.parse(data.toString())
+
+  return z.array(taskSchema).parse(tasks)
+}
+
+export default async function TaskPage() {
+  const tasks = await getTasks()
+
   return (
-    <section className="container grid items-center justify-center gap-4 pb-8 pt-6 md:py-10">
-      <div className="flex max-w-[1280px] flex-col items-center gap-2">
-        <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
-          Страница Таблицы с данными
-        </h1>
-      {/* <div className="container flex flex-col items-center gap-2">
-        < DataTable/>
-      </div>         */}
+    <>
+      <div className="md:hidden">
+        <Image
+          src="/examples/tasks-light.png"
+          width={1280}
+          height={998}
+          alt="Playground"
+          className="block dark:hidden"
+        />
+        <Image
+          src="/examples/tasks-dark.png"
+          width={1280}
+          height={998}
+          alt="Playground"
+          className="hidden dark:block"
+        />
       </div>
-    </section>
+      <div className="container hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Добро пожаловать!
+            </h2>
+            <p className="text-muted-foreground">
+              Вот список ваших задач на этот месяц!
+            </p>
+          </div>
+        </div>
+        <DataTable data={tasks} columns={columns} />
+      </div>
+    </>
   )
 }
